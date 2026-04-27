@@ -90,6 +90,12 @@ export interface GodModeEngineOptions {
     openrouterModelId?: string;
     groqModelId?: string;
     fallbackModels?: string[];
+    azureApiKey?: string;
+    azureEndpoint?: string;
+    azureApiVersion?: string;
+    azureModelId?: string;
+    supabaseUrl?: string;
+    supabaseAnonKey?: string;
   };
 }
 
@@ -260,7 +266,13 @@ export class GodModeEngine {
         openrouterModelId: appConfig.openrouterModelId,
         groqModelId: appConfig.groqModelId,
         fallbackModels: appConfig.fallbackModels || [],
-      },
+        azureApiKey: (appConfig as any).azureApiKey ?? '',
+        azureEndpoint: (appConfig as any).azureEndpoint ?? '',
+        azureApiVersion: (appConfig as any).azureApiVersion ?? '',
+        azureModelId: (appConfig as any).azureModelId ?? '',
+        supabaseUrl: (appConfig as any).supabaseUrl ?? '',
+        supabaseAnonKey: (appConfig as any).supabaseAnonKey ?? '',
+      } as any,
       organizationName: appConfig.organizationName ?? 'Content Hub',
       organizationUrl: appConfig.wpUrl ?? 'https://example.com',
       authorName: appConfig.authorName ?? 'Content Team',

@@ -197,7 +197,9 @@ export class SOTAContentGenerationEngine {
           duration: Date.now() - startTime,
           cached: false
         };
-        generationCache.set(cacheKey, result);
+        if (content && content.trim().length > 0) {
+          generationCache.set(cacheKey, result);
+        }
         return result;
       } catch (error) {
         lastError = error;
