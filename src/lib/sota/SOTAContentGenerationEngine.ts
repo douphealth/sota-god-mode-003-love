@@ -342,45 +342,53 @@ export class SOTAContentGenerationEngine {
     if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
     messages.push({ role: 'user', content: prompt });
 
-    const baseEndpoint = (this.modelConfigs.azure.endpoint || 'https://jls.openai.azure.com/').replace(/\/+$/, '');
+    const baseEndpoint = (this.modelConfigs.azure.endpoint || 'https://jls.openai.azure.com/');
     const apiVersion = this.apiKeys.azureApiVersion || '2025-04-01-preview';
     const modelId = this.modelConfigs.azure.modelId;
-    const url = `${baseEndpoint}/openai/v1/chat/completions?api-version=${encodeURIComponent(apiVersion)}`;
 
-    const isReasoningModel = /^o\d|^gpt-5/i.test(modelId);
-    const body: any = {
-      model: modelId,
-      messages,
-    };
-    if (isReasoningModel) {
-      body.max_completion_tokens = maxTokens;
-    } else {
-      body.max_tokens = maxTokens;
-      body.temperature = temperature;
+    const supabaseUrl = (this.apiKeys as any).supabaseUrl as string | undefined;
+    const supabaseAnonKey = (this.apiKeys as any).supabaseAnonKey as string | undefined;
+    const proxyUrl = supabaseUrl
+      ? `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/azure-openai-proxy`
+      : '/api/azure-openai-proxy';
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (supabaseAnonKey) {
+      headers['Authorization'] = `Bearer ${supabaseAnonKey}`;
+      headers['apikey'] = supabaseAnonKey;
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(proxyUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'api-key': apiKey,
-      },
-      body: JSON.stringify(body),
+      headers,
+      body: JSON.stringify({
+        endpoint: baseEndpoint,
+        apiVersion,
+        apiKey,
+        model: modelId,
+        messages,
+        maxTokens,
+        temperature,
+      }),
     });
 
+    const text = await response.text();
+    let data: any;
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
     if (!response.ok) {
-      const errText = await response.text().catch(() => '');
-      throw new Error(`Azure OpenAI API error ${response.status}: ${errText.slice(0, 500)}`);
+      const detail = data?.detail || data?.error || text.slice(0, 500);
+      throw new Error(`Azure OpenAI API error ${response.status}: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
     }
-    const data = await response.json();
-    const content =
-      data.choices?.[0]?.message?.content ||
-      data.output?.[0]?.content?.[0]?.text ||
-      data.output_text ||
-      '';
-    const tokens = data.usage?.total_tokens || 0;
-    return { content, tokens };
+
+    if (data?.error) {
+      throw new Error(`Azure OpenAI: ${data.detail || data.error}`);
+    }
+
+    return {
+      content: data?.content || '',
+      tokens: data?.tokens || 0,
+    };
   }
 
   getAvailableModels(): AIModel[] {
