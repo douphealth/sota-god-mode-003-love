@@ -1,12 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useOptimizerStore } from "@/lib/store";
 import { createNeuronWriterService } from "@/lib/sota/NeuronWriterService";
-import {
-  Key, Globe, User, Building, Image, UserCircle,
-  Sparkles, MapPin, Check, AlertCircle, ExternalLink, Database,
-  Settings, Loader2, FolderOpen, RefreshCw, XCircle, Bot, Zap,
-  Save, Download, Upload, RotateCcw, Trash2
-} from "lucide-react";
+import { Key, Globe, User, Building, Image, CircleUser as UserCircle, Sparkles, MapPin, Check, CircleAlert as AlertCircle, ExternalLink, Database, Settings, Loader as Loader2, FolderOpen, RefreshCw, Circle as XCircle, Bot, Zap, Save, Download, Upload, RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateSupabaseConfig } from "@/lib/supabaseClient";
 import { toast } from "sonner";
@@ -23,6 +18,29 @@ const OPENROUTER_MODELS = [
   { id: 'mistralai/mixtral-8x22b-instruct', name: 'Mixtral 8x22B' },
   { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat' },
   { id: 'cohere/command-r-plus', name: 'Command R+' },
+];
+
+const AZURE_MODELS = [
+  { id: 'gpt-5.5', name: 'GPT-5.5' },
+  { id: 'gpt-5.4', name: 'GPT-5.4' },
+  { id: 'gpt-5.4-pro', name: 'GPT-5.4 Pro' },
+  { id: 'gpt-5.3-chat', name: 'GPT-5.3 Chat' },
+  { id: 'gpt-5.3-codex', name: 'GPT-5.3 Codex' },
+  { id: 'gpt-5.2-chat', name: 'GPT-5.2 Chat' },
+  { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex' },
+  { id: 'gpt-5.1-codex-mini', name: 'GPT-5.1 Codex Mini' },
+  { id: 'gpt-5-chat', name: 'GPT-5 Chat' },
+  { id: 'gpt-5-codex', name: 'GPT-5 Codex' },
+  { id: 'gpt-5', name: 'GPT-5' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini' },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano' },
+  { id: 'gpt-4o', name: 'GPT-4o' },
+  { id: 'gpt-4.1', name: 'GPT-4.1' },
+  { id: 'o1', name: 'o1' },
+  { id: 'o3', name: 'o3' },
+  { id: 'o3-mini', name: 'o3-mini' },
+  { id: 'o4-mini', name: 'o4-mini' },
+  { id: 'gpt-image-2-jls', name: 'GPT Image 2 (jls)' },
 ];
 
 const GROQ_MODELS = [
@@ -730,6 +748,33 @@ export function SetupConfig() {
           <InputField label="OpenRouter API Key" value={config.openrouterApiKey} onChange={(v) => setConfig({ openrouterApiKey: v })} type="password" placeholder="sk-or-..." icon={<Bot className="w-4 h-4" />} />
           <InputField label="Groq API Key" value={config.groqApiKey} onChange={(v) => setConfig({ groqApiKey: v })} type="password" placeholder="gsk_..." icon={<Zap className="w-4 h-4" />} />
         </div>
+
+        <div className="mt-8 pt-6 border-t border-border/50">
+          <h3 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+            <Bot className="w-4 h-4 text-primary" />
+            Azure OpenAI (Codex / GPT)
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Use your Azure-hosted OpenAI deployment. Leave the endpoint as-is unless you've been told otherwise.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputField label="Azure OpenAI API Key" value={config.azureApiKey} onChange={(v) => setConfig({ azureApiKey: v })} type="password" placeholder="DNGuff... or CPNd1K..." icon={<Key className="w-4 h-4" />} />
+            <InputField label="Azure Endpoint" value={config.azureEndpoint} onChange={(v) => setConfig({ azureEndpoint: v })} placeholder="https://jls.openai.azure.com/" icon={<Globe className="w-4 h-4" />} />
+            <InputField label="Azure API Version" value={config.azureApiVersion} onChange={(v) => setConfig({ azureApiVersion: v })} placeholder="2025-04-01-preview" icon={<Settings className="w-4 h-4" />} />
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Default Azure Model</label>
+              <select
+                value={config.azureModelId}
+                onChange={(e) => setConfig({ azureModelId: e.target.value })}
+                className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                {AZURE_MODELS.map(m => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Model Configuration */}
@@ -753,6 +798,7 @@ export function SetupConfig() {
               <option value="anthropic">Anthropic Claude Sonnet 4</option>
               <option value="openrouter">OpenRouter (Custom Model)</option>
               <option value="groq">Groq (High-Speed)</option>
+              <option value="azure">Azure OpenAI (Codex / GPT)</option>
             </select>
           </div>
 

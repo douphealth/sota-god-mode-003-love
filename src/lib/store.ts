@@ -133,10 +133,14 @@ export interface AppConfig {
   anthropicApiKey: string;
   openrouterApiKey: string;
   groqApiKey: string;
-  primaryModel: 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'groq';
+  primaryModel: 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'groq' | 'azure';
   enableGoogleGrounding: boolean;
   openrouterModelId: string;
   groqModelId: string;
+  azureApiKey: string;
+  azureEndpoint: string;
+  azureApiVersion: string;
+  azureModelId: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
   wpUrl: string;
@@ -332,6 +336,10 @@ export const useOptimizerStore = create<OptimizerStore>()(
         enableGoogleGrounding: false,
         openrouterModelId: 'anthropic/claude-3.5-sonnet',
         groqModelId: 'llama-3.3-70b-versatile',
+        azureApiKey: '',
+        azureEndpoint: 'https://jls.openai.azure.com/',
+        azureApiVersion: '2025-04-01-preview',
+        azureModelId: 'gpt-5.4',
         supabaseUrl: '',
         supabaseAnonKey: '',
         wpUrl: '',
