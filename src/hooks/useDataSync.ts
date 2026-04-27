@@ -1,4 +1,4 @@
-﻿import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useOptimizerStore, type GeneratedContentStore } from "@/lib/store";
 import { getSupabaseConfig } from "@/lib/supabaseClient";
 import {
