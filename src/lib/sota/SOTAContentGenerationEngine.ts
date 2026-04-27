@@ -348,11 +348,15 @@ export class SOTAContentGenerationEngine {
     const apiVersion = this.apiKeys.azureApiVersion || '2025-04-01-preview';
     const modelId = this.modelConfigs.azure.modelId;
 
-    const supabaseUrl = (this.apiKeys as any).supabaseUrl as string | undefined;
-    const supabaseAnonKey = (this.apiKeys as any).supabaseAnonKey as string | undefined;
-    const proxyUrl = supabaseUrl
-      ? `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/azure-openai-proxy`
-      : '/api/azure-openai-proxy';
+    const envUrl = (import.meta as any)?.env?.VITE_SUPABASE_URL as string | undefined;
+    const envAnon = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+    const supabaseUrl = ((this.apiKeys as any).supabaseUrl as string | undefined) || envUrl;
+    const supabaseAnonKey = ((this.apiKeys as any).supabaseAnonKey as string | undefined) || envAnon;
+
+    if (!supabaseUrl) {
+      throw new Error('Azure proxy unavailable: missing Supabase URL. Configure VITE_SUPABASE_URL or fill Supabase fields in Setup.');
+    }
+    const proxyUrl = `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/azure-openai-proxy`;
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (supabaseAnonKey) {
