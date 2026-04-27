@@ -348,8 +348,8 @@ export class SOTAContentGenerationEngine {
     const apiVersion = this.apiKeys.azureApiVersion || '2025-04-01-preview';
     const modelId = this.modelConfigs.azure.modelId;
 
-    const envUrl = (import.meta as any)?.env?.VITE_SUPABASE_URL as string | undefined;
-    const envAnon = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+    const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const envAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
     const supabaseUrl = ((this.apiKeys as any).supabaseUrl as string | undefined) || envUrl;
     const supabaseAnonKey = ((this.apiKeys as any).supabaseAnonKey as string | undefined) || envAnon;
 
