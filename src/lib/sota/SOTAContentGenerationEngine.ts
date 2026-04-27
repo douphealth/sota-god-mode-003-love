@@ -54,6 +54,12 @@ const DEFAULT_MODEL_CONFIGS: Record<AIModel, ModelConfig> = {
     weight: 0.8,
     maxTokens: 8192,
   },
+  azure: {
+    endpoint: 'https://jls.openai.azure.com/',
+    modelId: 'gpt-5.4',
+    weight: 1.0,
+    maxTokens: 16384,
+  },
 };
 
 export interface ExtendedAPIKeys extends APIKeys {
@@ -96,6 +102,12 @@ export class SOTAContentGenerationEngine {
     if (apiKeys.groqModelId) {
       this.modelConfigs.groq = { ...this.modelConfigs.groq, modelId: apiKeys.groqModelId };
     }
+    if (apiKeys.azureEndpoint) {
+      this.modelConfigs.azure = { ...this.modelConfigs.azure, endpoint: apiKeys.azureEndpoint };
+    }
+    if (apiKeys.azureModelId) {
+      this.modelConfigs.azure = { ...this.modelConfigs.azure, modelId: apiKeys.azureModelId };
+    }
   }
 
   private log(message: string): void {
@@ -110,6 +122,7 @@ export class SOTAContentGenerationEngine {
       anthropic: 'anthropicApiKey',
       openrouter: 'openrouterApiKey',
       groq: 'groqApiKey',
+      azure: 'azureApiKey',
     };
     return this.apiKeys[keyMap[model]] as string | undefined;
   }
@@ -169,6 +182,10 @@ export class SOTAContentGenerationEngine {
           tokensUsed = r.tokens;
         } else if (model === 'openrouter' || model === 'groq') {
           const r = await this.callOpenAICompatible(config.endpoint, apiKey, config.modelId, prompt, systemPrompt, temperature, finalMaxTokens);
+          content = r.content;
+          tokensUsed = r.tokens;
+        } else if (model === 'azure') {
+          const r = await this.callAzure(apiKey, prompt, systemPrompt, temperature, finalMaxTokens);
           content = r.content;
           tokensUsed = r.tokens;
         }
@@ -320,8 +337,54 @@ export class SOTAContentGenerationEngine {
     };
   }
 
+  private async callAzure(apiKey: string, prompt: string, systemPrompt?: string, temperature: number = 0.7, maxTokens: number = 4096): Promise<{ content: string; tokens: number }> {
+    const messages: any[] = [];
+    if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'user', content: prompt });
+
+    const baseEndpoint = (this.modelConfigs.azure.endpoint || 'https://jls.openai.azure.com/').replace(/\/+$/, '');
+    const apiVersion = this.apiKeys.azureApiVersion || '2025-04-01-preview';
+    const modelId = this.modelConfigs.azure.modelId;
+    const url = `${baseEndpoint}/openai/v1/chat/completions?api-version=${encodeURIComponent(apiVersion)}`;
+
+    const isReasoningModel = /^o\d|^gpt-5/i.test(modelId);
+    const body: any = {
+      model: modelId,
+      messages,
+    };
+    if (isReasoningModel) {
+      body.max_completion_tokens = maxTokens;
+    } else {
+      body.max_tokens = maxTokens;
+      body.temperature = temperature;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'api-key': apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`Azure OpenAI API error ${response.status}: ${errText.slice(0, 500)}`);
+    }
+    const data = await response.json();
+    const content =
+      data.choices?.[0]?.message?.content ||
+      data.output?.[0]?.content?.[0]?.text ||
+      data.output_text ||
+      '';
+    const tokens = data.usage?.total_tokens || 0;
+    return { content, tokens };
+  }
+
   getAvailableModels(): AIModel[] {
-    const models: AIModel[] = ['gemini', 'openai', 'anthropic', 'openrouter', 'groq'];
+    const models: AIModel[] = ['gemini', 'openai', 'anthropic', 'openrouter', 'groq', 'azure'];
     return models.filter(model => this.getApiKey(model));
   }
 }

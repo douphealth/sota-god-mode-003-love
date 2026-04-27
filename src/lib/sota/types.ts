@@ -5,7 +5,7 @@ import type { NeuronWriterAnalysis, NeuronWriterHeadingData, NeuronWriterTermDat
 
 export type { NeuronWriterAnalysis, NeuronWriterHeadingData, NeuronWriterTermData };
 
-export type AIModel = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'groq';
+export type AIModel = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'groq' | 'azure';
 
 export interface APIKeys {
   geminiApiKey?: string;
@@ -14,6 +14,10 @@ export interface APIKeys {
   openrouterApiKey?: string;
   groqApiKey?: string;
   serperApiKey?: string;
+  azureApiKey?: string;
+  azureEndpoint?: string;
+  azureApiVersion?: string;
+  azureModelId?: string;
 }
 
 export interface GenerationParams {
