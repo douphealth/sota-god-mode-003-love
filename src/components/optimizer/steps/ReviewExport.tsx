@@ -1,10 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useOptimizerStore, type ContentItem, type GeneratedContentStore, type NeuronWriterDataStore } from "@/lib/store";
-import {
-  FileText, Check, X, AlertCircle, Trash2,
-  Sparkles, ArrowUpDown, Eye, Brain, ArrowRight,
-  CheckCircle, Clock, XCircle, Loader2, Database, Upload
-} from "lucide-react";
+import { FileText, Check, X, CircleAlert as AlertCircle, Trash2, Sparkles, ArrowUpDown, Eye, Brain, ArrowRight, CircleCheck as CheckCircle, Clock, Circle as XCircle, Loader as Loader2, Database, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createOrchestrator, globalPerformanceTracker, type GeneratedContent, type NeuronWriterAnalysis } from "@/lib/sota";
 import { ContentViewerPanel } from "../ContentViewerPanel";
@@ -422,7 +418,15 @@ export function ReviewExport() {
         let currentStepIdx = 0;
         const stepIds = ['research', 'videos', 'references', 'outline', 'content', 'enhance', 'links', 'validate', 'schema'];
 
-        const result = await orchestrator.generateContent({
+        const GENERATION_TIMEOUT_MS = 10 * 60 * 1000;
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`Generation timed out after ${GENERATION_TIMEOUT_MS / 60000} minutes`)),
+            GENERATION_TIMEOUT_MS,
+          ),
+        );
+
+        const result = await Promise.race([timeoutPromise, orchestrator.generateContent({
           keyword: item.primaryKeyword,
           title: item.title,
           contentType: item.type,
@@ -480,7 +484,7 @@ export function ReviewExport() {
               gi.id === item.id ? { ...gi, progress: itemProgress, currentStep: msg } : gi
             ));
           },
-        });
+        })]);
 
         // Mark all steps complete
         setGenerationSteps(prev => prev.map(s => ({ ...s, status: 'completed' })));

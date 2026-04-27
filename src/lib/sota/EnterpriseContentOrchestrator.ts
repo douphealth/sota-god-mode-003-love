@@ -294,6 +294,9 @@ export class EnterpriseContentOrchestrator {
       // ── Step 3: Poll until data is ready ─────────────────────────────────
       this.log(`NeuronWriter: Polling query ${queryId} for analysis data...`);
 
+      let consecutiveFailures = 0;
+      const MAX_CONSECUTIVE_FAILURES = 3;
+
       for (let i = 0; i < NW_MAX_POLL_ATTEMPTS; i++) {
         const elapsed = Date.now() - startTime;
 
@@ -305,10 +308,17 @@ export class EnterpriseContentOrchestrator {
         const res = await service.getQueryAnalysis(queryId);
 
         if (!res.success) {
-          this.warn(`NeuronWriter: getQueryAnalysis failed (attempt ${i + 1}): ${res.error}`);
+          consecutiveFailures++;
+          this.warn(`NeuronWriter: getQueryAnalysis failed (attempt ${i + 1}, consecutive failures: ${consecutiveFailures}): ${res.error}`);
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            this.warn(`NeuronWriter: ${MAX_CONSECUTIVE_FAILURES} consecutive proxy failures (likely /api/neuronwriter is unreachable). Aborting polling.`);
+            break;
+          }
           await new Promise(r => setTimeout(r, NW_POLL_INTERVAL_MS));
           continue;
         }
+
+        consecutiveFailures = 0;
 
         if (res.analysis) {
           const a = res.analysis;

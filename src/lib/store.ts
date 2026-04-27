@@ -516,6 +516,17 @@ export const useOptimizerStore = create<OptimizerStore>()(
           ...(persistedState as object),
         };
         rehydrateAllDates(merged);
+
+        // Recover items stuck in 'generating' state from a previous session
+        // (e.g. tab closed mid-generation, hard refresh, server crash).
+        if (Array.isArray((merged as any).contentItems)) {
+          (merged as any).contentItems = (merged as any).contentItems.map((it: ContentItem) =>
+            it.status === 'generating'
+              ? { ...it, status: 'error' as const, error: 'Generation interrupted (session reload). Please retry.' }
+              : it
+          );
+        }
+
         return merged;
       },
     }
