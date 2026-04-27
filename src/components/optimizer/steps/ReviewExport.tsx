@@ -657,7 +657,8 @@ export function ReviewExport() {
     config.openaiApiKey ||
     config.anthropicApiKey ||
     config.openrouterApiKey ||
-    config.groqApiKey
+    config.groqApiKey ||
+    config.azureApiKey
   );
   const hasSerper = !!config.serperApiKey;
 

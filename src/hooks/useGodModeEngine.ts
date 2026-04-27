@@ -126,7 +126,7 @@ export function useGodModeEngine() {
 
     const hasApiKey = appConfig.geminiApiKey || appConfig.openaiApiKey ||
       appConfig.anthropicApiKey || appConfig.openrouterApiKey ||
-      appConfig.groqApiKey;
+      appConfig.groqApiKey || (appConfig as any).azureApiKey;
 
     if (!hasApiKey) {
       throw new Error('No AI API key configured. Please add at least one API key in Setup.');
