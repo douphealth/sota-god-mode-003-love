@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx server/index.ts & vite",
+    "dev": "vite",
+    "dev:full": "tsx server/index.ts & vite",
     "dev:server": "tsx server/index.ts",
     "dev:client": "vite",
     "build": "vite build",
