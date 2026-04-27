@@ -364,19 +364,26 @@ export class SOTAContentGenerationEngine {
       headers['apikey'] = supabaseAnonKey;
     }
 
-    const response = await fetch(proxyUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        endpoint: baseEndpoint,
-        apiVersion,
-        apiKey,
-        model: modelId,
-        messages,
-        maxTokens,
-        temperature,
-      }),
-    });
+    console.log(`[Azure] Calling proxy: ${proxyUrl} (endpoint=${baseEndpoint}, model=${modelId})`);
+    let response: Response;
+    try {
+      response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          endpoint: baseEndpoint,
+          apiVersion,
+          apiKey,
+          model: modelId,
+          messages,
+          maxTokens,
+          temperature,
+        }),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Azure proxy network error reaching ${proxyUrl}: ${msg}`);
+    }
 
     const text = await response.text();
     let data: any;
