@@ -350,8 +350,8 @@ export class SOTAContentGenerationEngine {
 
     const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
     const envAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-    const supabaseUrl = ((this.apiKeys as any).supabaseUrl as string | undefined) || envUrl;
-    const supabaseAnonKey = ((this.apiKeys as any).supabaseAnonKey as string | undefined) || envAnon;
+    const supabaseUrl = envUrl || ((this.apiKeys as any).supabaseUrl as string | undefined);
+    const supabaseAnonKey = envAnon || ((this.apiKeys as any).supabaseAnonKey as string | undefined);
 
     if (!supabaseUrl) {
       throw new Error('Azure proxy unavailable: missing Supabase URL. Configure VITE_SUPABASE_URL or fill Supabase fields in Setup.');
